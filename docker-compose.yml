@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  streamlit-app:
+    build: .
+    container_name: streamlit-vertex-ai-encryption
+    ports:
+      - "8501:8501"  # Expose Streamlit port
+    volumes:
+      - .:/app  # Mount the current directory to /app in the container
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets.json  # Path to credentials file inside container
+    # Optional: If you need to persist data, add a volume here
+    # volumes:
+    #   - /path/on/host:/path/in/container
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

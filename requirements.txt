@@ -1,0 +1,6 @@
+streamlit
+cryptography
+google-cloud
+google-auth
+requests
+google-cloud-aiplatform
