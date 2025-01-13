@@ -3,6 +3,13 @@ import base64
 from cryptography.fernet import Fernet
 from google.cloud import aiplatform
 from google.oauth2 import service_account
+import vertexai
+from vertexai.preview.generative_models import GenerativeModel, Image
+
+PROJECT_ID = "genai-project-447217"
+REGION = "us-central1"
+vertexai.init(project=PROJECT_ID, location=REGION)
+generative_multimodal_model = GenerativeModel("gemini-1.5-flash-002")
 
 # Generate and load encryption key
 key = Fernet.generate_key()
@@ -10,27 +17,16 @@ cipher_suite = Fernet(key)
 
 # Google Vertex AI Setup
 def get_vertex_ai_response(encrypted_prompt):
-    # Replace with your Google Cloud credentials JSON file
-    credentials_path = "secrets.json"
-    credentials = service_account.Credentials.from_service_account_file(credentials_path)
-    print(credentials)
-    
-    # Initialize Vertex AI
-    aiplatform.init(credentials=credentials, project="genai-project-447217", location="us-central1")
-    aiplatform.init(credentials=credentials)
-    model_resource_name = "projects/genai-project-447217/locations/us-central1/models/publishers/google/models/gemini-1.5-flash-002"
-
-    # Initialize the model
-    model = aiplatform.Model(model_resource_name)
-
-    # Assuming you're using a text generation model in Vertex AI
-    # model = aiplatform.Model("projects/genai-project-447217/locations/us-central1/models/publishers/google/models/gemini-1.5-flash-002")
-    
     decrypted_prompt = cipher_suite.decrypt(encrypted_prompt.encode()).decode()
 
     # Send decrypted prompt to Vertex AI model and get response
-    response = model.predict([decrypted_prompt])
-    return response.predictions[0]
+    response = generative_multimodal_model.generate_content([decrypted_prompt])
+
+    # Extract and return the answer text
+    if response and response.candidates:
+        return response.candidates[0].content.parts[0].text
+    else:
+        return "No response received from the model."
 
 # Streamlit Interface
 def main():
@@ -48,7 +44,7 @@ def main():
             st.write(f"Encrypted Prompt: {encrypted_prompt}")
             response = get_vertex_ai_response(encrypted_prompt)
             
-            # Show the response
+            # Show only the answer
             st.write("Response from Vertex AI:")
             st.write(response)
         else:
